@@ -1,0 +1,6 @@
+finnhub-python
+requests
+python-dotenv
+openai
+schedule
+pytz
