@@ -10,7 +10,8 @@ from financial_model.scenario import run_scenarios as _run_scenarios
 
 
 def estimate(symbol, period="2026", persist=True):
-    """估值：情景 EPS × 行业 PE → 目标价区间
+    """
+    估值：情景 EPS × 行业 PE → 目标价区间
     PE 优先取基本面 pe；无则用默认区间（成长 25-35，稳健 15-25）。
     """
     from domain.company.profile import profile
@@ -33,7 +34,9 @@ def estimate(symbol, period="2026", persist=True):
 
     # 行业属性粗略决定 PE band
     sector = (prof.get("sector") or "").lower()
-    if any(k in sector for k in ("tech", "semiconductor", "software")):
+    tech_keys = ("tech", "semiconductor", "software", "半导体", "软件", "科技",
+                 "芯片", "云", "互联网", "消费电子")
+    if any(k in sector for k in tech_keys):
         pe_lo, pe_hi = 25.0, 35.0
     else:
         pe_lo, pe_hi = 15.0, 25.0
@@ -62,7 +65,9 @@ def estimate(symbol, period="2026", persist=True):
 
 
 def get_valuation_records(symbol, model_type=None):
-    """读取已保存的估值记录（含 assumption_json 解析）"""
+    """
+    读取已保存的估值记录（含 assumption_json 解析）
+    """
     rows = forecast_repo.get_valuations(symbol=symbol, model_type=model_type)
     out = []
     for r in rows:

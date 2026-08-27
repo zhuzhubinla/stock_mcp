@@ -38,6 +38,7 @@ def segment_margin_chain(segment_revenue, segment_gross_margin, segment_opex=Non
     """单业务段：营收 → 毛利 → 营业利润 链条（分业务建模，再汇总到公司层）"""
     gp = gross_profit(segment_revenue, segment_gross_margin)
     op = operating_profit(gp, segment_opex) if segment_opex is not None else gp
-    return {"revenue": segment_revenue, "gross_profit": gp,
+    return {"revenue": segment_revenue, 
+            "gross_profit": gp,
             "operating_profit": op,
             "gross_margin": segment_gross_margin}

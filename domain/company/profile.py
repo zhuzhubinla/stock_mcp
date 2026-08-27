@@ -17,13 +17,26 @@ def profile(company_id=None, symbol=None):
     industries = graph_repo.get_industry_companies(symbol=company.get("stock_symbol"))
     valuations = forecast_repo.get_valuations(company_id=company["id"])
 
+    # sector 兜底：v2 company 表无 sector 列，从行业反推行业属性
+    sector = company.get("sector")
+    if not sector and industries:
+        ind_names = " ".join(r["industry_name"] or "" for r in industries)
+        ind_codes = " ".join(r["industry_code"] or "" for r in industries)
+        combined = f"{ind_names} {ind_codes}"
+        if any(k in combined for k in ("半导体", "芯片", "ai", "semiconductor", "chip", "memory", "cloud", "网络")):
+            sector = "tech"
+        elif any(k in combined for k in ("消费", "眼镜", "穿戴", "consumer")):
+            sector = "consumer_electronics"
+        else:
+            sector = "general"
+
     return {
         "company_id": company["id"],
         "name": company["name"],
         "stock_symbol": company.get("stock_symbol"),
         "country": company.get("country"),
         "exchange": company.get("exchange"),
-        "sector": company.get("sector"),
+        "sector": sector,
         "listed": company.get("listed"),
         "description": company.get("description"),
         "business_segments": segments,

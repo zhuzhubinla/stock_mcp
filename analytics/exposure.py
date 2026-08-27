@@ -7,7 +7,8 @@ sys.path.append("/home/admin/stock_agent")
 
 
 def elasticity_score(impacts):
-    """弹性评分：对 Factor-First 的驱动影响排序
+    """
+    弹性评分：对 Factor-First 的驱动影响排序
     按 metric_impact_pct 绝对值加权（revenue 权1.0 / eps 权1.5）
     """
     scored = []
@@ -22,12 +23,15 @@ def elasticity_score(impacts):
 
 
 def exposure_weighted_rank(companies, exposures=None):
-    """按 暴露度 × 弹性 综合排名"""
+    """
+    按 暴露度 × 弹性 综合排名
+    """
     if exposures is None:
         return companies
     ranked = []
     for c in companies:
         exp = exposures.get(c["symbol"], 1.0)
-        ranked.append({**c, "exposure": exp,
+        ranked.append({**c,
+                       "exposure": exp,
                        "composite": round((c.get("elasticity") or 0) * exp, 2)})
     return sorted(ranked, key=lambda x: x["composite"], reverse=True)

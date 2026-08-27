@@ -7,7 +7,9 @@ sys.path.append("/home/admin/stock_agent")
 
 
 def yoy(series, key="value", period_key="period"):
-    """同比：按 period 字符串（如 2025Q1）推算上年同期"""
+    """
+    同比：按 period 字符串（如 2025Q1）推算上年同期
+    """
     rows = sorted(series, key=lambda r: r.get(period_key) or "")
     out = []
     lookup = {r.get(period_key): r for r in rows}
@@ -18,12 +20,16 @@ def yoy(series, key="value", period_key="period"):
         cur = r.get(key)
         if cur is not None and base and base.get(key):
             out.append({
-                "period": p, "value": cur, "prev_period": prev,
+                "period": p,
+                "value": cur,
+                "prev_period": prev,
                 "prev_value": base[key],
                 "yoy_pct": round((cur - base[key]) / base[key] * 100, 2),
             })
         else:
-            out.append({"period": p, "value": cur, "prev_period": prev,
+            out.append({"period": p,
+                        "value": cur,
+                        "prev_period": prev,
                         "prev_value": base[key] if base else None, "yoy_pct": None})
     return out
 

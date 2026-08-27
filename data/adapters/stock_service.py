@@ -217,16 +217,20 @@ def get_news_summary(symbol, hours=24):
     rows = db.get_news(symbol, limit=50, hours=hours)
     news = _rows_to_news(symbol, rows)["news"]
     if not news:
-        return {"symbol": symbol, "hours": hours, "total": 0,
-                "overall_sentiment": "neutral", "avg_sentiment_score": 0.0,
+        return {"symbol": symbol,
+                "hours": hours,
+                "total": 0,
+                "overall_sentiment": "neutral",
+                "avg_sentiment_score": 0.0,
                 "high_impact_events": []}
     scores = [n["sentiment_score"] for n in news if n["sentiment_score"] is not None]
     avg = sum(scores) / len(scores) if scores else 0.0
     overall = "positive" if avg > 0.15 else ("negative" if avg < -0.15 else "neutral")
-    high_impact = sorted(
-        [n for n in news if (n["impact_score"] or 0) >= 0.5],
-        key=lambda n: n["impact_score"], reverse=True)[:5]
-    return {"symbol": symbol, "hours": hours, "total": len(news),
+    high_impact = sorted([n for n in news if (n["impact_score"] or 0) >= 0.5],
+                         key=lambda n: n["impact_score"], reverse=True)[:5]
+    return {"symbol": symbol,
+            "hours": hours,
+            "total": len(news),
             "overall_sentiment": overall, "avg_sentiment_score": round(avg, 4),
             "high_impact_events": high_impact}
 
@@ -385,15 +389,20 @@ def get_technical(symbol, days=120, force_refresh=False):
 
 # ---------- 综合分析 ----------
 def analyze(symbol, force_refresh=False):
-    """汇总行情/历史/新闻/基本面/技术面，跑 Signal Engine，返回结构化结果"""
+    """
+    汇总行情/历史/新闻/基本面/技术面，跑 Signal Engine，返回结构化结果
+    """
     quote = get_quote(symbol, force_refresh)
+    print("quote:", quote)
     hist = get_history(symbol, days=120, force_refresh=force_refresh)
+    # print("hist:", hist)
     news = get_news(symbol, limit=5, force_refresh=force_refresh)
+    print("news:", news)
     fundamentals = get_fundamentals(symbol, force_refresh)
-
+    print("fundamentals:", fundamentals)
+    print("fundamentals======")
     ind = trend.compute_indicators(hist.get("bars", [])) if hist.get("bars") else {}
     signals = scoring.compute_total(quote, ind, news.get("news", []), fundamentals.get("metrics", []))
-
     result = {
         "symbol": symbol,
         "quote": quote,

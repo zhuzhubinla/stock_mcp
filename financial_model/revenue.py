@@ -12,7 +12,8 @@ from domain.factor import engine as factor_engine
 
 
 def build_revenue_model(symbol, persist=True):
-    """按业务分拆构建营收模型：
+    """
+    按业务分拆构建营收模型：
     每个 segment 找到对应行业指标（出货量/ASP），
     revenue_segment = indicator_value × share × asp（若有）
     结果写入 financial_model + financial_model_line。
@@ -67,7 +68,10 @@ def build_revenue_model(symbol, persist=True):
         forecast_repo.upsert_financial_model_line(model_id, "revenue", "2026-01-01", total,
                                                   assumption_type="derived",
                                                   formula="Σ segment revenue")
-    return {"symbol": symbol, "model_id": model_id, "segments": model,
-            "total_estimated": round(total, 2), "method": "shipment × ASP（分业务）"}
+    return {"symbol": symbol,
+            "model_id": model_id,
+            "segments": model,
+            "total_estimated": round(total, 2),
+            "method": "shipment × ASP（分业务）"}
 
 

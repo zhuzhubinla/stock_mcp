@@ -1,4 +1,5 @@
-"""Financial Model Engine：把 Driver 转换成公司财务预测
+"""
+Financial Model Engine：把 Driver 转换成公司财务预测
 Agent 流程第 9 步（Financial Model）+ 第 10 步（Scenario）。
 Revenue = Segment1 Shipment × Share × ASP + Segment2 ... + Other（文档第 21 节）
 v2：financial_model（模型头）+ financial_model_line（metric/period/value/formula）
