@@ -122,6 +122,7 @@ def chain_for_company(symbol):
 
 
 def _list_all_chains():
-    with __import__("database.mysql_db", fromlist=["get_conn"]).get_conn() as conn, conn.cursor() as cur:
+    from intelligence.repositories.mysql_db import get_conn
+    with get_conn() as conn, conn.cursor() as cur:
         cur.execute("SELECT id, name FROM industry_chain ORDER BY id")
         return cur.fetchall()

@@ -13,7 +13,7 @@ def estimate(symbol, period="2026E", persist=True):
     PE 优先取基本面 pe；无则用默认区间（成长 25-35，稳健 15-25）。
     """
     from intelligence.company.profile import profile
-    from database import mysql_db as db
+    from intelligence.repositories import mysql_db as db
 
     prof = profile(symbol=symbol)
     if "error" in prof:

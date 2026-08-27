@@ -9,7 +9,7 @@ import sys
 sys.path.append("/home/admin/stock_agent")
 
 from fastmcp import FastMCP
-from services import stock_service
+from intelligence.services import stock_service
 from intelligence.services import stock_first, industry_first, factor_first
 from intelligence.stock.resolver import resolve
 from intelligence.company.profile import profile

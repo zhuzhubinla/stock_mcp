@@ -4,7 +4,7 @@ Agent 流程第 1 步。负责解析证券代码并定位公司主体。
 import sys
 sys.path.append("/home/admin/stock_agent")
 
-from database import mysql_db as db
+from intelligence.repositories import mysql_db as db
 from intelligence.repositories import graph_repo
 
 

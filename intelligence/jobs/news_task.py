@@ -2,8 +2,8 @@
 import json
 
 from config import WATCHLIST_PATH, NEWS_ANALYZE_BATCH
-from news.collector import collect
-from news.analyzer import analyze_pending
+from intelligence.collectors.news.collector import collect
+from intelligence.collectors.news.analyzer import analyze_pending
 
 
 def load_watchlist():

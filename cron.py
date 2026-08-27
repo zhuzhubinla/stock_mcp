@@ -8,8 +8,8 @@ import schedule
 import time
 
 from main import run
-from tasks.news_task import collect_watchlist, analyze_pending_news
-from tasks.anomaly_task import scan_watchlist_anomalies
+from intelligence.jobs.news_task import collect_watchlist, analyze_pending_news
+from intelligence.jobs.anomaly_task import scan_watchlist_anomalies
 from intelligence.jobs.intelligence_job import run_daily_intelligence_report
 
 schedule.every().day.at("08:30").do(run)

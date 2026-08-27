@@ -4,9 +4,9 @@
 import json
 
 from config import DEEPSEEK_API_KEY, DEEPSEEK_BASE_URL, DEEPSEEK_MODEL, NEWS_ANALYZE_BATCH
-from database import mysql_db as db
+from intelligence.repositories import mysql_db as db
 from .providers.base import NewsItem
-from . import event_extractor
+from intelligence.analytics import event_extractor
 
 SYSTEM_PROMPT = (
     "你是专业的股票新闻分析器。给定一条新闻和涉及的股票，只输出 JSON：\n"

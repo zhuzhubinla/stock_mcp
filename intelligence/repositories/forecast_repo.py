@@ -4,7 +4,7 @@
 import sys
 sys.path.append("/home/admin/stock_agent")
 
-from database.mysql_db import get_conn
+from intelligence.repositories.mysql_db import get_conn
 
 
 # ---------- company_forecast ----------

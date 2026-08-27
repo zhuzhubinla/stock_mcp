@@ -5,14 +5,14 @@
 import sys
 sys.path.append("/home/admin/stock_agent")
 
-from tasks.news_task import load_watchlist
+from intelligence.jobs.news_task import load_watchlist
 from intelligence.services import stock_first, factor_first
 from intelligence.ai.analyst import summarize
 
 
 def run_daily_intelligence_report(symbols=None):
     """对 watchlist 每只股票跑 Stock-First + 研报摘要，落库 stock_analysis"""
-    from database import mysql_db as db
+    from intelligence.repositories import mysql_db as db
     symbols = symbols or load_watchlist()
     results = []
     for symbol in symbols:

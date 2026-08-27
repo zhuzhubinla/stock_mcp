@@ -9,8 +9,8 @@ import finnhub
 import yfinance as yf
 
 from config import FINNHUB_API_KEY, QUOTE_TTL, HISTORY_TTL, NEWS_TTL, FUNDAMENTAL_TTL
-from database import mysql_db as db
-from analysis import technical, signal
+from intelligence.repositories import mysql_db as db
+from intelligence.analytics import technical, signal
 
 finnhub_client = finnhub.Client(api_key=FINNHUB_API_KEY)
 
@@ -186,7 +186,7 @@ def get_news(symbol, limit=5, hours=None, force_refresh=False):
         if rows:
             return _rows_to_news(symbol, rows)
     try:
-        from news.collector import collect
+        from intelligence.collectors.news.collector import collect
         collect([symbol])
         rows = db.get_news(symbol, limit, hours)
         if rows:
@@ -268,13 +268,13 @@ def get_news_events(symbol, hours=24, event_type=None):
 
 def get_anomalies(symbol, days=30):
     """价格/成交量异常检测，附窗口内新闻归因"""
-    from news.anomaly import get_anomalies_with_causes
+    from intelligence.analytics.anomaly import get_anomalies_with_causes
     return get_anomalies_with_causes(symbol, days=days)
 
 
 def explain_price_move(symbol, days=10):
     """解释最近一次异常波动（价格异常 + 新闻归因）"""
-    from news.anomaly import explain_price_move as _explain
+    from intelligence.analytics.anomaly import explain_price_move as _explain
     return _explain(symbol, days=days)
 
 

@@ -6,7 +6,7 @@
 from datetime import datetime, timedelta
 
 from config import NEWS_FETCH_HOURS
-from database import mysql_db as db
+from intelligence.repositories import mysql_db as db
 from .providers import get_provider, PROVIDERS
 from .normalizer import normalize
 from .deduplicator import find_duplicate

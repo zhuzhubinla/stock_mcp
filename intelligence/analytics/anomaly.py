@@ -2,8 +2,8 @@
 from datetime import datetime, timedelta
 
 from config import ANOMALY_NEWS_WINDOW_HOURS
-from database import mysql_db as db
-from services import stock_service
+from intelligence.repositories import mysql_db as db
+from intelligence.services import stock_service
 
 PRICE_THRESHOLD = 4.0    # |单日涨跌| >= 4%
 VOLUME_THRESHOLD = 2.5   # 量比 >= 2.5

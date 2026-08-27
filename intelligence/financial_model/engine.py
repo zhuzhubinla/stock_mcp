@@ -5,7 +5,7 @@ Revenue = Segment1 Shipment × Share × ASP + Segment2 ... + Other（文档第 1
 import sys
 sys.path.append("/home/admin/stock_agent")
 
-from services import stock_service
+from intelligence.services import stock_service
 from intelligence.repositories import graph_repo, forecast_repo
 from intelligence.factor import engine as factor_engine
 
@@ -69,7 +69,7 @@ def run_scenarios(symbol, base_eps=None, bull_mult=1.3, bear_mult=0.7,
         base_eps = existing[0].get("eps")
     # 基本面兜底：从 stock_fundamental 拿 eps；再兜底 price/pe 估算
     if base_eps is None:
-        from database import mysql_db as db
+        from intelligence.repositories import mysql_db as db
         pe, price = None, None
         for f in db.get_fundamentals(symbol):
             if f["metric"] == "eps" and f["value"]:

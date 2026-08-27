@@ -2,8 +2,8 @@
 from datetime import datetime, timedelta
 
 from config import ANOMALY_SCAN_DAYS
-from news.anomaly import get_anomalies_with_causes
-from tasks.news_task import load_watchlist
+from intelligence.analytics.anomaly import get_anomalies_with_causes
+from intelligence.jobs.news_task import load_watchlist
 
 
 def scan_watchlist_anomalies(days=None):

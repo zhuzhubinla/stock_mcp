@@ -4,7 +4,7 @@ Agent 流程第 8 步。复用既有 services.stock_service 与 news 管线。
 import sys
 sys.path.append("/home/admin/stock_agent")
 
-from services import stock_service
+from intelligence.services import stock_service
 
 
 def market_data(symbol, force_refresh=False):
