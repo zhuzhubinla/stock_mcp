@@ -351,3 +351,18 @@ def generate_research_report(ticker: str) -> dict:
     """LLM 研究报告：对 Stock-First 全链路结果生成中文研报摘要"""
     sf = stock_first.analyze(ticker.upper(), with_valuation=True)
     return summarize(stock_first_result=sf, symbol=ticker.upper())
+
+
+@mcp.tool()
+def industry_sync(symbols: str = None) -> dict:
+    """手动触发真实行业数据同步：SEC 财报 + FRED 行业指标（替换种子数据）"""
+    from jobs.industry_sync import run_industry_sync
+    sym_list = [s.strip().upper() for s in symbols.split(",")] if symbols else None
+    return run_industry_sync(symbols=sym_list)
+
+
+@mcp.tool()
+def get_sec_financials(symbol: str) -> dict:
+    """获取公司 SEC XBRL 真实财报（营收/净利/EPS/现金流，年度）"""
+    from data.collectors.sec_financials import get_annual_metrics
+    return get_annual_metrics(symbol.upper())

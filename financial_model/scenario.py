@@ -24,7 +24,12 @@ def run_scenarios(symbol, base_eps=None, bull_mult=1.3, bear_mult=0.7,
         return prof
     company_id = prof["company_id"]
 
-    # 取已有 base 情景预测
+    # 基准获取链：SEC 真实值(actual) 优先 → 已有 base 预测 → fundamentals → price/pe
+    actual = forecast_repo.get_company_forecasts(company_id=company_id, metric="eps",
+                                                 scenario="actual")
+    if base_eps is None and actual:
+        # 取最新年份的真实 EPS 作为 base 基准
+        base_eps = sorted(actual, key=lambda x: str(x["period"] or ""))[-1].get("value")
     existing = forecast_repo.get_company_forecasts(company_id=company_id, metric="eps",
                                                    period=period, scenario="base")
     if base_eps is None and existing:

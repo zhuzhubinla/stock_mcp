@@ -1,5 +1,8 @@
 """种子数据：Intelligence Graph 初始数据（v2 schema）
-行业 / 产业链（AI 眼镜、半导体）/ 公司业务分拆 / 关系 / 因子 / 指标 / 供需 / 财务驱动 / 预测
+⚠️ 引导/兑底数据（bootstrap）：真实数据源接入后由同步任务覆盖：
+- SEC EDGAR XBRL → 公司真实财报（data/collectors/sec_financials.py）
+- FRED → 行业指标（data/collectors/fred_industry.py）
+- jobs/industry_sync.py 每日 08:50 自动同步
 幂等可重复执行。依据《Detailed Technical Design》字段级设计。
 """
 import sys
