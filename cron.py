@@ -8,9 +8,9 @@ import schedule
 import time
 
 from main import run
-from intelligence.jobs.news_task import collect_watchlist, analyze_pending_news
-from intelligence.jobs.anomaly_task import scan_watchlist_anomalies
-from intelligence.jobs.intelligence_job import run_daily_intelligence_report
+from jobs.news_update import collect_watchlist, analyze_pending_news
+from jobs.industry_update import scan_watchlist_anomalies
+from jobs.daily_sync import run_daily_intelligence_report
 
 schedule.every().day.at("08:30").do(run)
 schedule.every().day.at("08:45").do(run_daily_intelligence_report)

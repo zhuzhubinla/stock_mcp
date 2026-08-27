@@ -4,7 +4,7 @@
 import sys
 sys.path.append("/home/admin/stock_agent")
 
-from intelligence.repositories.mysql_db import get_conn
+from data.repositories.mysql_db import get_conn
 
 SQL_FILE = "/home/admin/stock_agent/migrations/20260827_intelligence_graph.sql"
 

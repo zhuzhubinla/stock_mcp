@@ -9,18 +9,19 @@ import sys
 sys.path.append("/home/admin/stock_agent")
 
 from fastmcp import FastMCP
-from intelligence.services import stock_service
-from intelligence.services import stock_first, industry_first, factor_first
-from intelligence.stock.resolver import resolve
-from intelligence.company.profile import profile
-from intelligence.business.decomposer import decompose
-from intelligence.industry.mapper import map_company, map_industry, industry_tree
-from intelligence.supply_chain.mapper import get_chain, upstream, downstream, chain_for_company
-from intelligence.relationship.explorer import explore
-from intelligence.factor.engine import drivers, industry_factors, indicators, supply_demand
-from intelligence.financial_model.engine import build_revenue_model, run_scenarios
-from intelligence.valuation.engine import estimate
-from intelligence.ai.analyst import summarize
+from data.adapters import stock_service
+from app.use_cases import stock_first, industry_first, factor_first
+from domain.stock.resolver import resolve
+from domain.company.profile import profile
+from domain.business.decomposer import decompose
+from domain.industry.mapper import map_company, map_industry, industry_tree
+from domain.supply_chain.mapper import get_chain, upstream, downstream, chain_for_company
+from domain.relationship.explorer import explore
+from domain.factor.engine import drivers, industry_factors, indicators, supply_demand
+from financial_model.revenue import build_revenue_model as build_revenue_model_func
+from financial_model.scenario import run_scenarios
+from financial_model.valuation import estimate
+from ai.analyst import summarize
 
 mcp = FastMCP("stock-server")
 
@@ -230,3 +231,123 @@ def stock_intelligence_report(symbol: str) -> dict:
 
 if __name__ == "__main__":
     mcp.run()
+
+
+# ============================================================
+# 领域工具（Detailed Technical Design 第 26 节规范命名）
+# ============================================================
+
+@mcp.tool()
+def resolve_stock(ticker: str) -> dict:
+    """定位股票与公司主体（Stock Resolver）"""
+    return resolve(ticker.upper())
+
+
+@mcp.tool()
+def get_company_profile(ticker: str) -> dict:
+    """公司画像：主体信息 + 业务分拆 + 行业暴露 + 估值记录"""
+    return profile(symbol=ticker.upper())
+
+
+@mcp.tool()
+def get_business_segments(ticker: str) -> dict:
+    """业务分拆：公司各业务线及其映射行业、营收占比"""
+    return decompose(symbol=ticker.upper())
+
+
+@mcp.tool()
+def get_industry_exposure(ticker: str) -> dict:
+    """公司对行业的暴露度（exposure_weight / revenue / profit 暴露）"""
+    return map_company(ticker.upper())
+
+
+@mcp.tool()
+def get_supply_chain(chain_name: str = None) -> dict:
+    """产业链全图：节点 + 上下游边"""
+    return get_chain(name=chain_name)
+
+
+@mcp.tool()
+def get_upstream_companies(chain_name: str, node: str, depth: int = 2) -> dict:
+    """产业链某节点上游追踪（供应商/原材料/设备）"""
+    chain = get_chain(name=chain_name)
+    if "error" in chain:
+        return chain
+    return upstream(chain["chain_id"], node, depth=depth)
+
+
+@mcp.tool()
+def get_downstream_companies(chain_name: str, node: str, depth: int = 2) -> dict:
+    """产业链某节点下游追踪（客户/品牌/终端需求）"""
+    chain = get_chain(name=chain_name)
+    if "error" in chain:
+        return chain
+    return downstream(chain["chain_id"], node, depth=depth)
+
+
+@mcp.tool()
+def get_company_relationships(ticker: str, relationship_type: str = None) -> dict:
+    """公司关系：supplier/customer/competitor/partner/foundry..."""
+    return explore(symbol=ticker.upper(), relation_type=relationship_type)
+
+
+@mcp.tool()
+def get_industry_factors(industry_id: int = None, factor_type: str = None) -> dict:
+    """行业驱动因子（demand/price/cost/technology/policy/macro/competition/capacity）"""
+    return {"factors": industry_factors(industry_id=industry_id, factor_type=factor_type)}
+
+
+@mcp.tool()
+def get_industry_indicators(industry_id: int = None, indicator_code: str = None,
+                            ticker: str = None) -> dict:
+    """行业指标（出货量/渗透率/ASP/产能/库存），可按行业或个股反查"""
+    return {"indicators": indicators(industry_id=industry_id, indicator_code=indicator_code,
+                                     symbol=ticker.upper() if ticker else None)}
+
+
+@mcp.tool()
+def get_supply_demand(industry_id: int = None) -> dict:
+    """供需：产能/产量/需求/库存/利用率/缺口"""
+    return {"supply_demand": supply_demand(industry_id=industry_id)}
+
+
+@mcp.tool()
+def get_company_events(ticker: str, event_type: str = None, hours: int = 168) -> dict:
+    """公司事件（新闻/政策/产品发布/产能变化），事件驱动分析入口"""
+    from data.repositories.forecast_repo import get_events
+    company = profile(symbol=ticker.upper())
+    if "error" in company:
+        return company
+    rows = get_events(event_type=event_type, company_id=company["company_id"], hours=hours)
+    return {"symbol": ticker.upper(), "count": len(rows), "events": rows}
+
+
+@mcp.tool()
+def get_financials(ticker: str) -> dict:
+    """公司基本面指标（PE/利润率/增长/ROE 等）"""
+    return stock_service.get_fundamentals(ticker.upper())
+
+
+@mcp.tool()
+def build_revenue_model(ticker: str) -> dict:
+    """分业务营收模型：Revenue = Σ Shipment × Share × ASP"""
+    return build_revenue_model_func(ticker.upper())
+
+
+@mcp.tool()
+def run_scenario(ticker: str, period: str = "2026") -> dict:
+    """Bull/Base/Bear 情景 EPS 预测"""
+    return run_scenarios(ticker.upper(), period=period)
+
+
+@mcp.tool()
+def run_valuation(ticker: str, period: str = "2026") -> dict:
+    """估值：情景 EPS × 行业 PE → 目标价区间"""
+    return estimate(ticker.upper(), period=period)
+
+
+@mcp.tool()
+def generate_research_report(ticker: str) -> dict:
+    """LLM 研究报告：对 Stock-First 全链路结果生成中文研报摘要"""
+    sf = stock_first.analyze(ticker.upper(), with_valuation=True)
+    return summarize(stock_first_result=sf, symbol=ticker.upper())

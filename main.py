@@ -3,10 +3,10 @@ import json
 from datetime import datetime
 
 from config import WATCHLIST_PATH
-from intelligence.repositories import mysql_db as db
-from intelligence.services.stock_service import get_quote
-from intelligence.jobs.news_task import load_watchlist, collect_watchlist, analyze_pending_news
-from intelligence.services.wechat_push import send
+from data.repositories import mysql_db as db
+from data.adapters.stock_service import get_quote
+from jobs.news_update import load_watchlist, collect_watchlist, analyze_pending_news
+from data.adapters.wechat_push import send
 
 
 def run():
