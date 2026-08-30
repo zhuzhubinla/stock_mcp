@@ -366,3 +366,129 @@ def get_sec_financials(symbol: str) -> dict:
     """获取公司 SEC XBRL 真实财报（营收/净利/EPS/现金流，年度）"""
     from data.collectors.sec_financials import get_annual_metrics
     return get_annual_metrics(symbol.upper())
+
+
+# ============================================================
+# Phase 8：Investment Intelligence + Online Learning（设计文档第 7/13/14/23/26 节）
+# ============================================================
+
+@mcp.tool()
+def stock_intelligence_v2(symbol: str, with_valuation: bool = True) -> dict:
+    """【Phase 8 全链路】Investment Intelligence Pipeline：
+    Market Regime → Data Engine → Precondition(Context Vector + Market Precondition)
+    → Expectation Gap → Signal → Conflict/Confidence → Dynamic Scoring(0-100)
+    → Scenario/Valuation → Risk/Reward → Snapshot（在线学习数据）"""
+    from app.use_cases.intelligence_pipeline import intelligence
+    return intelligence(symbol.upper(), persist=True, with_valuation=with_valuation)
+
+
+@mcp.tool()
+def stock_get_market_regime(force_refresh: bool = False) -> dict:
+    """Market Regime：当前市场状态（risk_on/risk_off/neutral + 趋势/波动/宽度/宏观分）"""
+    from context.regime_detector import detect_regime, get_latest_regime
+    if force_refresh:
+        return detect_regime(persist=True)
+    return get_latest_regime()
+
+
+@mcp.tool()
+def stock_get_precondition(symbol: str, refresh: bool = False) -> dict:
+    """Precondition / Context Vector：估值/行业周期/盈利趋势/价格趋势/预期/宏观/Market Precondition
+    Context 是信号的调节条件，不是简单加分项"""
+    from context.precondition_engine import build_context
+    if refresh:
+        return build_context(symbol.upper(), persist=True)
+    from context.precondition_engine import get_context
+    rows = get_context(symbol.upper(), limit=1)
+    if rows:
+        r = rows[0]
+        return {"symbol": symbol.upper(),
+                "context_vector": {k: float(r[k]) for k in
+                                    ("valuation", "industry_cycle", "earnings_trend",
+                                     "price_trend", "expectation", "macro_regime",
+                                     "market_regime")},
+                "confidence": float(r["confidence"]),
+                "computed_at": str(r["computed_at"])}
+    return build_context(symbol.upper(), persist=True)
+
+
+@mcp.tool()
+def stock_get_expectation(symbol: str) -> dict:
+    """Expectation Gap：Actual vs Expected vs Priced-in（超预期/预期透支）"""
+    from context.expectation_engine import expectation_gap
+    return expectation_gap(symbol.upper())
+
+
+@mcp.tool()
+def stock_get_score(symbol: str, refresh: bool = False) -> dict:
+    """【Phase 8】Overall Score：0-100 动态加权评分 + 置信度 + 方向 + 成分拆解
+    refresh=True 时重新跑全链路并生成新快照"""
+    if refresh:
+        from app.use_cases.intelligence_pipeline import intelligence
+        r = intelligence(symbol.upper(), persist=True)
+        return {"symbol": symbol.upper(), "overall_score": r["overall_score"],
+                "confidence": r["confidence"], "direction": r["direction"],
+                "market_regime": r.get("market_regime"),
+                "snapshot_id": r.get("snapshot_id"),
+                "components": next((s["data"]["components"] for s in r["steps"]
+                                    if s["step"] == "dynamic_scoring"), []),
+                "computed_at": r.get("computed_at")}
+    from scoring.score_engine import get_snapshot_history
+    rows = get_snapshot_history(symbol.upper(), limit=1)
+    if not rows:
+        return {"symbol": symbol.upper(), "error": "无快照，请用 refresh=True 生成"}
+    r = rows[0]
+    return {"symbol": symbol.upper(), "overall_score": float(r["score"]),
+            "confidence": float(r["confidence"]), "direction": r["direction"],
+            "weight_version": r["weight_version"],
+            "snapshot_time": str(r["snapshot_time"]),
+            "components": [{"component": c["component"], "score": float(c["score"]),
+                            "weight": float(c["weight"])} for c in r.get("components", [])]}
+
+
+@mcp.tool()
+def stock_get_score_history(symbol: str, limit: int = 30) -> dict:
+    """评分历史快照（回测数据）：总分/置信度/方向/成分/已回填 forward return"""
+    from scoring.score_engine import get_snapshot_history
+    rows = get_snapshot_history(symbol.upper(), limit=limit)
+    return {"symbol": symbol.upper(), "count": len(rows), "snapshots": rows}
+
+
+@mcp.tool()
+def stock_get_conflicts(symbol: str, limit: int = 20) -> dict:
+    """信号冲突记录（fundamental vs market / news vs industry 等）"""
+    from signals.conflict import get_conflicts
+    rows = get_conflicts(symbol.upper(), limit=limit)
+    return {"symbol": symbol.upper(), "count": len(rows), "conflicts": rows}
+
+
+@mcp.tool()
+def stock_run_calibration(horizon_days: int = 20, dry_run: bool = False) -> dict:
+    """【Phase 8】Online Learning / Continuous Calibration：
+    回填 forward return → 计算各成分 IC（Spearman）→ 在线更新动态权重（版本化）
+    dry_run=True 只预览不落库"""
+    from learning.online_calibration import run_calibration
+    return run_calibration(horizon_days=horizon_days, persist=not dry_run)
+
+
+@mcp.tool()
+def stock_get_calibration(limit: int = 10) -> dict:
+    """校准历史：IC / 权重版本变更 / 各成分调权记录"""
+    from learning.online_calibration import get_calibration_history
+    return {"runs": get_calibration_history(limit=limit)}
+
+
+@mcp.tool()
+def stock_get_weight_config() -> dict:
+    """当前动态权重配置（版本化，Phase 8 在线学习产物）"""
+    from scoring.weight_engine import get_weight_config, list_weight_versions
+    cfg = get_weight_config()
+    return {"active": cfg, "versions": list_weight_versions()}
+
+
+@mcp.tool()
+def stock_replay_history() -> dict:
+    """【Phase 8 初始化】历史重放：用历史价格生成带真实 forward return 的校准样本
+    （仅首次搭建时使用，正常在线学习靠每日快照自然积累）"""
+    from learning.history_replay import replay_watchlist
+    return replay_watchlist(persist=True)

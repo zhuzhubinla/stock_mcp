@@ -195,8 +195,13 @@ def compute_total(quote, ind, news_list, fundamentals):
 if __name__ == "__main__":
     # 冒烟测试
     q = {"percent": 2.5}
-    ind = {"rsi14": 55, "last_close": 120, "ma20": 115, "ma60": 110,
-           "macd": 0.8, "volume_ratio": 1.8, "pos_from_low_pct": 85}
+    ind = {"rsi14": 55,
+           "last_close": 120,
+           "ma20": 115,
+           "ma60": 110,
+           "macd": 0.8,
+           "volume_ratio": 1.8,
+           "pos_from_low_pct": 85}
     news = [{"title": "Company beats earnings, stock surges"}]
     fund = [{"metric": "netMargin", "value": 0.25},
             {"metric": "revenueGrowth", "value": 0.15}]

@@ -341,6 +341,14 @@ def get_signals(symbol, limit=50):
 
 # ---------- stock_analysis ----------
 def save_analysis(symbol, result, analysis_type="general", model=None):
+    """
+    Save stock analysis result to database.
+    :param symbol: Stock symbol
+    :param result: Analysis result dict
+    :param analysis_type: Type of analysis (default: "general")
+    :param model: Model used for analysis (default: None)
+    """
+    print("save analysis:", symbol, analysis_type, model)
     with get_conn() as conn, conn.cursor() as cur:
         cur.execute("""
             INSERT INTO stock_analysis (symbol, timestamp, analysis_type, result, model)

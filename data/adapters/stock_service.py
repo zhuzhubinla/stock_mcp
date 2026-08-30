@@ -316,6 +316,11 @@ def _nasdaq_fundamentals(symbol):
 def get_fundamentals(symbol, force_refresh=False):
     """获取基本面指标（Finnhub + Nasdaq 补充）"""
     rows = db.get_fundamentals(symbol)
+    # 关键指标兜底：缓存缺 pe/revenueGrowth 等衍生指标时强制刷新（SEC 同步只写营收/EPS）
+    if rows and not force_refresh:
+        have = {r["metric"] for r in rows}
+        if "pe" not in have and "revenueGrowth" not in have:
+            force_refresh = True
     if rows and not force_refresh:
         return {"symbol": symbol, "metrics": [dict(r) for r in rows], "source": "mysql_cache"}
     try:
@@ -402,7 +407,9 @@ def analyze(symbol, force_refresh=False):
     print("fundamentals:", fundamentals)
     print("fundamentals======")
     ind = trend.compute_indicators(hist.get("bars", [])) if hist.get("bars") else {}
+    print("ind:", ind)
     signals = scoring.compute_total(quote, ind, news.get("news", []), fundamentals.get("metrics", []))
+    print("signals:", signals)
     result = {
         "symbol": symbol,
         "quote": quote,
