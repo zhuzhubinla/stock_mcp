@@ -65,18 +65,23 @@ def intelligence(symbol, persist=True, force_refresh=False, with_valuation=True)
                                            fundamentals.get("metrics", []))
     # 映射到 0~100 成分分
     comp_raw = {c["name"].split()[0].lower(): c["score"] for c in signals["components"]}
+    # Prediction 成分：真实预测信号（无则中性 50）
+    from domain.prediction.mapper import stock_prediction_score
+    pred = stock_prediction_score(symbol)
     component_scores = {
         "fundamental": _map_signal(comp_raw.get("fundamental"), 1.0),
         "market": _map_signal(comp_raw.get("market") if comp_raw.get("market") is not None
                               else comp_raw.get("price"), 0.6),
         "news": _map_signal(comp_raw.get("news"), 0.8),
-        "prediction": 50.0,  # 预测源未接入时中性（Phase 4 预留）
+        "prediction": pred["score"],  # Phase 8：Prediction Intelligence 真实分
     }
     # Expectation 调整（设计文档第 6 节：surprise 正 → fundamental 加成，priced-in 高 → 减成）
     if exp.get("signal_adjustment"):
         component_scores["fundamental"] += exp["signal_adjustment"] * 15
     chain.append(STEP("signal_extraction", {"legacy_total": signals["total_score"],
-                                            "component_scores_0_100": component_scores}))
+                                            "component_scores_0_100": component_scores,
+                                            "prediction_detail": {"score": pred["score"],
+                                                                   "signals": pred["signals"][:3]}}))
 
     # 5. Conflict + Confidence
     conflicts = conflict_engine.detect_conflicts(component_scores)

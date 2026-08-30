@@ -492,3 +492,74 @@ def stock_replay_history() -> dict:
     （仅首次搭建时使用，正常在线学习靠每日快照自然积累）"""
     from learning.history_replay import replay_watchlist
     return replay_watchlist(persist=True)
+
+
+# ============================================================
+# Prediction Intelligence（设计文档第 8 节：Polymarket/Kalshi 真实数据）
+# ============================================================
+
+@mcp.tool()
+def prediction_sync(source: str = "kalshi", limit: int = 30, proxy: str = None) -> dict:
+    """同步预测市场数据：Kalshi（大陆可直连 demo API）/ Polymarket（需海外 VPS 或代理）
+    拉取事件+市场+概率 → 落库"""
+    from data.collectors.prediction.collector import collect_source
+    return collect_source(source, limit=limit, persist=True, proxy=proxy)
+
+
+@mcp.tool()
+def prediction_events(category: str = None, status: str = "open", limit: int = 50) -> dict:
+    """预测事件列表（宏观/公司/AI/加密/选举等分类）"""
+    from data.repositories import prediction_repo as repo
+    evs = repo.list_events(status=status, category=category, limit=limit)
+    return {"count": len(evs), "events": [
+        {"id": e["id"], "title": e["title"], "category": e["category"],
+         "status": e["status"], "end_time": str(e["end_time"]) if e.get("end_time") else None}
+        for e in evs]}
+
+
+@mcp.tool()
+def prediction_markets(status: str = "active", source_code: str = None, limit: int = 50) -> dict:
+    """预测市场列表（含实时概率/流动性/成交量）"""
+    from data.repositories import prediction_repo as repo
+    ms = repo.list_markets(status=status, source_code=source_code, limit=limit)
+    return {"count": len(ms), "markets": [
+        {"id": m["id"], "title": m.get("title"), "source": m.get("source_code"),
+         "probability": float(m["last_price"]) if m.get("last_price") is not None else None,
+         "open_interest": float(m["open_interest"]) if m.get("open_interest") is not None else None,
+         "event": m.get("event_title"), "category": m.get("event_category")}
+        for m in ms]}
+
+
+@mcp.tool()
+def prediction_consensus(event_id: int = None, category: str = None) -> dict:
+    """多源共识：Σ(P_i×W_i)/Σ(W_i) + 源离散度 + 24h/7d 概率动量
+    event_id 指定单事件，否则按类别计算全部"""
+    from domain.prediction.engine import compute_consensus, compute_all_consensus
+    if event_id:
+        c = compute_consensus(event_id, persist=True)
+        return c or {"event_id": event_id, "error": "无共识（事件无有效市场）"}
+    return {"results": compute_all_consensus(persist=True, category=category)}
+
+
+@mcp.tool()
+def prediction_signals(symbol: str = None, limit: int = 50) -> dict:
+    """Prediction→Stock 映射信号：预测事件经 Knowledge Graph 传播到个股
+    例：AI CapEx→Data Center→GPU→NVDA；symbol 指定则返回该股预测聚合分"""
+    from data.repositories import prediction_repo as repo
+    from domain.prediction.mapper import stock_prediction_score
+    if symbol:
+        return stock_prediction_score(symbol.upper())
+    rows = repo.get_signals(limit=limit)
+    return {"count": len(rows), "signals": [
+        {"entity": r["entity_symbol"], "type": r["entity_type"],
+         "direction": r["direction"], "strength": float(r["strength"]),
+         "confidence": float(r["confidence"]), "probability": float(r["probability"]) if r.get("probability") is not None else None,
+         "event": r.get("event_title"), "path": r.get("propagation_path")}
+        for r in rows]}
+
+
+@mcp.tool()
+def prediction_map_events() -> dict:
+    """对全部 open 预测事件执行 → 股票映射（Knowledge Graph 传播）"""
+    from domain.prediction.mapper import map_all_events
+    return map_all_events(persist=True)
