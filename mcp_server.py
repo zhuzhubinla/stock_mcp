@@ -207,7 +207,7 @@ def stock_intelligence_drivers(symbol: str, impact_metric: str = None) -> dict:
 @mcp.tool()
 def stock_intelligence_financial_model(symbol: str) -> dict:
     """营收模型：分业务 Shipment×Share×ASP 拆解"""
-    return build_revenue_model(symbol.upper())
+    return build_revenue_model_func(symbol.upper())
 
 
 @mcp.tool()
@@ -227,10 +227,6 @@ def stock_intelligence_report(symbol: str) -> dict:
     """LLM 研究报告：对 Stock-First 全链路结果生成中文研报摘要"""
     sf = stock_first.analyze(symbol.upper(), with_valuation=True)
     return summarize(stock_first_result=sf, symbol=symbol.upper())
-
-
-if __name__ == "__main__":
-    mcp.run()
 
 
 # ============================================================
@@ -563,3 +559,7 @@ def prediction_map_events() -> dict:
     """对全部 open 预测事件执行 → 股票映射（Knowledge Graph 传播）"""
     from domain.prediction.mapper import map_all_events
     return map_all_events(persist=True)
+
+
+if __name__ == "__main__":
+    mcp.run()
