@@ -16,6 +16,7 @@ from data.repositories.mysql_db import get_conn
 SOURCE_CONFIG = {
     "kalshi": {"base_url": "https://demo-api.kalshi.co/trade-api/v2"},
     "polymarket": {"base_url": "https://gamma-api.polymarket.com"},
+    "metaculus": {"base_url": "https://www.metaculus.com/api2"},
 }
 
 

@@ -1,11 +1,29 @@
 # Stock Agent 配置
 import os
+from pathlib import Path
+
+# 轻量 .env 加载（无第三方依赖）：优先读环境变量，其次读项目根 .env
+# 用途：METACULUS_API_KEY 等敏感值不入库不入 git
+_ENV_FILE = Path(__file__).resolve().parent / ".env"
+if _ENV_FILE.exists():
+    for _line in _ENV_FILE.read_text(encoding="utf-8").splitlines():
+        _line = _line.strip()
+        if not _line or _line.startswith("#") or "=" not in _line:
+            continue
+        _k, _v = _line.split("=", 1)
+        _k, _v = _k.strip(), _v.strip().strip('"').strip("'")
+        if _k and _k not in os.environ:
+            os.environ[_k] = _v
 
 FINNHUB_API_KEY = "REDACTED_FINNHUB_KEY"
 
 # 新闻源 API Keys（环境变量注入，缺省留空=该源不可用）
 ALPHAVANTAGE_API_KEY = os.environ.get("ALPHAVANTAGE_API_KEY", "")
 BENZINGA_API_KEY = os.environ.get("BENZINGA_API_KEY", "")
+
+# Metaculus API Token（预测源，2026-09 起强制鉴权）
+# 获取：登录 https://www.metaculus.com → Settings/Account → API token
+METACULUS_API_KEY = os.environ.get("METACULUS_API_KEY", "")
 SEC_USER_AGENT = os.environ.get("SEC_USER_AGENT", "stock-agent admin@example.com")
 
 # MySQL 配置

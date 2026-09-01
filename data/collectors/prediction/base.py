@@ -86,4 +86,7 @@ def create_adapter(source_code, **kwargs):
     if source_code == "polymarket":
         from data.collectors.prediction.polymarket import PolymarketAdapter
         return PolymarketAdapter(**kwargs)
+    if source_code == "metaculus":
+        from data.collectors.prediction.metaculus import MetaculusAdapter
+        return MetaculusAdapter(**kwargs)
     raise ValueError(f"未知预测源: {source_code}")

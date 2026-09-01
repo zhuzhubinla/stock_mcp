@@ -9,8 +9,15 @@
 |---|---|---|---|
 | Kalshi | P0 | ✅ 真实接入 | `demo-api.kalshi.co` 大陆直连可用（2026-08-30 实测 27 事件/229 市场） |
 | Polymarket | P0 | 🔧 代码就绪 | gamma/clob 大陆直连超时 → 海外 VPS 或代理模式（设计文档 21 节 Option B） |
-| Metaculus | P1 | 待接入 | API 需认证（403） |
+| Metaculus | P1 | ✅ 代码就绪（待 token） | API v2 强制鉴权；`Authorization: Token`；概率=社区中位数（q2） |
 | Manifold | P1 | 待接入 | 社区预测 |
+
+> **Metaculus（2026-09-01 接入）**：API 已全面要求认证（匿名 403），需 API token
+> （`https://www.metaculus.com/settings/account/` 生成）。token 通过环境变量
+> `METACULUS_API_KEY` 注入，或写入项目根 `.env`（已 gitignore）。
+> 模式：question 即事件+市场，无订单簿 → yes_ask/bid/volume/OI 置空，
+> 概率取 `community_prediction.full.q2`（社区中位数，回退 mean）。
+> 动量靠每次 sync 快照累积（Metaculus 无公开时序端点）。
 
 ## 2. 架构
 
@@ -19,6 +26,7 @@ data/collectors/prediction/
   base.py          # PredictionAdapter 抽象（fetch_events/fetch_markets/fetch_market_detail）
   kalshi.py        # Kalshi v2 API（demo 默认，生产换 base_url+api_key）
   polymarket.py    # Gamma + CLOB API（海外 VPS/代理部署）
+  metaculus.py     # Metaculus API v2（Token 鉴权；question=事件+市场；社区中位数概率）
   collector.py     # 编排：拉取 → 归一化 → 落库（含体育 shard 过滤）
 data/repositories/prediction_repo.py   # prediction_* 7 表读写
 domain/prediction/
@@ -90,6 +98,6 @@ collect_source('polymarket', proxy='http://your-proxy:port')
 ## 10. 待办
 
 - Polymarket 海外 VPS 实拉后验证 Gamma 字段映射
-- Metaculus API token 接入（P1）
+- Metaculus 实拉验证（.env 配置 token 后）
 - Prediction 事件的置信度校准（Brier）纳入 Phase 8 循环
 - 更多 KEYWORD_MAP 规则 + 产业链传播权重（industry_chain_edge）
