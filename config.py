@@ -15,7 +15,7 @@ if _ENV_FILE.exists():
         if _k and _k not in os.environ:
             os.environ[_k] = _v
 
-FINNHUB_API_KEY = "REDACTED_FINNHUB_KEY"
+FINNHUB_API_KEY = os.environ.get("FINNHUB_API_KEY", "")
 
 # 新闻源 API Keys（环境变量注入，缺省留空=该源不可用）
 ALPHAVANTAGE_API_KEY = os.environ.get("ALPHAVANTAGE_API_KEY", "")
@@ -30,7 +30,7 @@ SEC_USER_AGENT = os.environ.get("SEC_USER_AGENT", "stock-agent admin@example.com
 MYSQL_HOST = "127.0.0.1"
 MYSQL_PORT = 3306
 MYSQL_USER = "admin"
-MYSQL_PASSWORD = "REDACTED_MYSQL_PASSWORD"
+MYSQL_PASSWORD = os.environ.get("MYSQL_PASSWORD", "")
 MYSQL_DB = "stock_db"
 
 # 数据刷新阈值（秒）：超过则从数据源拉新
