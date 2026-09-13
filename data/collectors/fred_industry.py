@@ -22,6 +22,10 @@ FRED_SERIES = [
     ("INDPRO", "industrial_production", "工业产出", "指数", "monthly", "macro"),
     ("CPIAUCSL", "cpi", "消费者物价指数", "指数", "monthly", "macro"),
     ("UMCSENT", "consumer_sentiment", "消费者信心", "指数", "monthly", "macro"),
+    # Phase 7 新增：利率/风险/大宗（macro 行业，日频）→ 宏观因子信号源
+    ("DGS10", "us10y_yield", "美国10年期国债收益率", "%", "daily", "macro"),
+    ("VIXCLS", "vix", "VIX 波动率指数", "指数", "daily", "macro"),
+    ("DCOILWTICO", "wti_oil", "WTI 原油现货价", "美元/桶", "daily", "macro"),
 ]
 
 CACHE = {}

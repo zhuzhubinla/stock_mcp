@@ -561,5 +561,62 @@ def prediction_map_events() -> dict:
     return map_all_events(persist=True)
 
 
+# ============================================================
+# Phase 7：Macro → Industry Transmission Engine（2026-09-03 落地）
+# ============================================================
+
+@mcp.tool()
+def industry_macro_score(industry_code: str = None, horizon: str = None,
+                         refresh: bool = False) -> dict:
+    """【Phase 7】行业宏观分：宏观因子经 Regime/Event/Horizon 修正后对行业的影响
+    score 约 -1~+1（正=宏观顺风）；refresh=True 重算全部行业 1d/1w/1m"""
+    from app.use_cases.industry_transmission import macro_scores
+    return macro_scores(industry_code=industry_code, horizon=horizon, refresh=refresh)
+
+
+@mcp.tool()
+def industry_macro_regime(force_refresh: bool = False) -> dict:
+    """【Phase 7】宏观 regime：goldilocks/overheating/recession/stagflation/neutral
+    （区别于 market_regime 的 risk_on/off：这是增长×通胀四态）"""
+    from app.use_cases.industry_transmission import macro_regime
+    return macro_regime(force_refresh=force_refresh)
+
+
+@mcp.tool()
+def industry_macro_exposure(industry_code: str = None, factor_code: str = None,
+                            horizon: str = "1w") -> dict:
+    """【Phase 7】宏观因子→行业敏感性（EffectiveExposure = Base×Regime×Event×Horizon）"""
+    from app.use_cases.industry_transmission import macro_exposures
+    return macro_exposures(industry_code=industry_code, factor_code=factor_code,
+                           horizon=horizon)
+
+
+@mcp.tool()
+def industry_macro_simulate(factor_changes: str = None, event_key: str = None,
+                            event_level: str = "normal", horizon: str = "1w",
+                            event_id: int = None) -> dict:
+    """【Phase 7】情景模拟：假设宏观因子信号变化 → 行业影响（落库可追溯）
+    factor_changes 为 JSON 字符串，如 '{"RATES": -0.5, "FED_POLICY": 0.6}'；
+    event_key/event_level（normal/important/major）触发事件日修正"""
+    import json as _json
+    from app.use_cases.industry_transmission import simulate
+    try:
+        changes = _json.loads(factor_changes) if factor_changes else None
+    except Exception:
+        return {"error": "factor_changes 不是合法 JSON"}
+    if not changes:
+        return {"error": "factor_changes 需为 {因子: 信号值}，如 '{\"RATES\": -0.5}'"}
+    return simulate(changes, event_key=event_key, event_level=event_level,
+                    horizon=horizon, event_id=event_id)
+
+
+@mcp.tool()
+def industry_macro_transmission(event_id: int = None, industry_code: str = None,
+                                limit: int = 20) -> dict:
+    """【Phase 7】传导事件记录：宏观信号日/情景对各行业的影响（含因子分解）"""
+    from app.use_cases.industry_transmission import transmission_events
+    return transmission_events(event_id=event_id, industry_code=industry_code, limit=limit)
+
+
 if __name__ == "__main__":
     mcp.run()
